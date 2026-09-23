@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Webサーバー・PHP環境
+  app:
+    image: php:8.2-apache
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/var/www/html
+    depends_on:
+      - db
+    # PDO MySQL拡張を有効化して起動
+    command: >
+      bash -c "docker-php-ext-install pdo pdo_mysql && apache2-foreground"
+
+  # データベース環境
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: reservation
+      MYSQL_DATABASE: reservation_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

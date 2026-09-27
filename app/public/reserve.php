@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 // DB接続
 require_once __DIR__ . '/../config/db.php';
@@ -18,6 +19,8 @@ try {
     $stmt->execute();
     $service = $stmt->fetch();
 
+    $service_id = $_GET['service_id'] ?? $_POST['service_id'] ?? null;
+
     if (!$service) {
         exit("該当データは存在しません。");
     }
@@ -30,18 +33,19 @@ $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reserved_at = $_POST['reserved_at'] ?? '';
-    $user_id = $_POST['user_id'] ?? '';
+    $user_id = $_SESSION['user_id'] ?? '';
 
-    if (!empty($reserved_at) && !empty($user_id)) {
+    if (!empty($reserved_at)) {
         try {
+            $formatted_reserved_at = date('Y-m-d H:i:s', strtotime($reserved_at));
             $stmt = $pdo->prepare("INSERT INTO reservations (user_id, service_id, reserved_at, status) VALUES (:user_id, :service_id, :reserved_at, :status)");
             $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->bindValue(':service_id', $service_id, PDO::PARAM_INT);
-            $stmt->bindValue(':reserved_at', $reserved_at, PDO::PARAM_STR);
+            $stmt->bindValue(':reserved_at', $formatted_reserved_at, PDO::PARAM_STR);
             $stmt->bindValue(':status', 'reserved', PDO::PARAM_STR);
             $stmt->execute();
 
-            header('Location: services.php');
+            header('Location: mypage.php?status=success');
             exit();
         } catch (PDOException $e) {
             $errorMessage = "予約処理中にエラーが発生しました。" . $e->getMessage();
@@ -51,4 +55,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once __DIR__ . '/../public/reserve_view.phtml';
+require_once __DIR__ . '/reserve_view.phtml';

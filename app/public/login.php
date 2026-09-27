@@ -36,4 +36,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "メールアドレスまたはパスワードが正しくありません。";
     }
 } 
-require_once __DIR__ . '/../public/login_view.phtml';
+require_once __DIR__ . '/login_view.phtml';

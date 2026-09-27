@@ -51,4 +51,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once __DIR__ . '/../public/reserve_view.phtml';
+require_once __DIR__ . '/reserve_view.phtml';

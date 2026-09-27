@@ -28,6 +28,31 @@
             color: #333;
         }
 
+        .site-nav {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .site-nav ul {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .site-nav a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .site-nav a:hover {
+            text-decoration: underline;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -77,6 +102,12 @@
 
 <body>
     <div class="container">
+        <nav class="site-nav" aria-label="メインメニュー">
+            <ul>
+                <li><a href="login.php">ログイン</a></li>
+                <li><a href="services.php">サービス一覧</a></li>
+            </ul>
+        </nav>
         <h2>新規会員登録</h2>
 
         <?php if (!empty($errors)): ?>

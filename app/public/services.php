@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 // DB接続
 require_once __DIR__ . '/../config/db.php';

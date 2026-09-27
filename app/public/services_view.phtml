@@ -31,6 +31,24 @@
             padding-bottom: 15px;
         }
 
+        .site-nav ul {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .site-nav a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .site-nav a:hover {
+            text-decoration: underline;
+        }
+
         .service-card {
             border: 1px solid #e0e0e0;
             border-radius: 6px;
@@ -73,6 +91,12 @@
     <div class="container">
         <div class="header">
             <h2>予約可能サービス一覧</h2>
+            <nav class="site-nav" aria-label="メインメニュー">
+                <ul>
+                    <li><a href="login.php">ログイン</a></li>
+                    <li><a href="register.php">新規会員登録</a></li>
+                </ul>
+            </nav>
         </div>
 
         <div class="service-list">

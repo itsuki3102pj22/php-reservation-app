@@ -1,6 +1,10 @@
 <?php
 session_start();
 
+if (!isset($_SESSION['user_id'])) {
+    header('Location: register.php?message=require_auth');
+}
+
 // DB接続
 require_once __DIR__ . '/../config/db.php';
 

@@ -3,7 +3,6 @@ session_start();
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: register.php?message=require_auth');
-    exit();
 }
 
 // DB接続
@@ -24,6 +23,8 @@ try {
     $stmt->execute();
     $service = $stmt->fetch();
 
+    $service_id = $_GET['service_id'] ?? $_POST['service_id'] ?? null;
+
     if (!$service) {
         exit("該当データは存在しません。");
     }
@@ -32,35 +33,28 @@ try {
 }
 
 // エラーメッセージ初期化
-$errorMessage = '';
-$reserved_at = '';
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reserved_at = trim($_POST['reserved_at'] ?? '');
-    $user_id = $_SESSION['user_id'];
-    $reservationDate = null;
+    $user_id = $_SESSION['user_id'] ?? '';
 
-    if ($reserved_at === '') {
-        $errorMessage = '予約日時を指定してください。';
+    // TODO 1: 予約日時が未入力の場合は、予約処理を行わずエラーメッセージを用意する。
+    if ($reserved_at === '') 
+        $error = "予約日時を指定してください。";
     } else {
-        // datetime-local の標準形式は YYYY-MM-DDTHH:MM。
-        $reservationDate = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $reserved_at);
-        $dateErrors = DateTimeImmutable::getLastErrors();
-
-        if (
-            $reservationDate === false
-            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
-            || $reservationDate->format('Y-m-d\\TH:i') !== $reserved_at
-        ) {
-            $errorMessage = '予約日時の形式が不正です。';
-        } elseif ($reservationDate <= new DateTimeImmutable()) {
-            $errorMessage = '予約日時は未来の日時を指定してください。';
-        }
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i', $reserved_at);
+        $dateErrors = DateTimeimmutable::getLastErrors();
     }
-
-    if ($errorMessage === '') {
+    // TODO 2: 入力値を日時として扱える形式か確認する。不正な形式の場合もエラーメッセージを用意する。
+    // TODO 3: 入力された予約日時と現在日時を比較し、過去の日時ならエラーメッセージを用意する。
+    if ($resered_at =< CURRENT) {
+        $error = "予約日時は未来の日時を指定してください。";
+    }
+    // TODO 4: エラーメッセージがない場合だけ、下の予約登録処理を実行するよう条件を組み立てる。
+    if (empty($error)) {
         try {
-            $formatted_reserved_at = $reservationDate->format('Y-m-d H:i:s');
+            $formatted_reserved_at = date('Y-m-d H:i:s', strtotime($reserved_at));
             $stmt = $pdo->prepare("INSERT INTO reservations (user_id, service_id, reserved_at, status) VALUES (:user_id, :service_id, :reserved_at, :status)");
             $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->bindValue(':service_id', $service_id, PDO::PARAM_INT);
@@ -71,12 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: mypage.php?status=success');
             exit();
         } catch (PDOException $e) {
-            $errorMessage = '予約処理中にエラーが発生しました。';
+            $error = "予約処理中にエラーが発生しました。" . $e->getMessage();
         }
+    } else {
+        // TODO 5: エラーがある場合は、reserve_view.phtml でその内容を表示できる変数に代入する。
+        $error = "予約日時が空欄です。";
     }
 }
-
-// ビューの表示変数名に合わせる。
-$error = $errorMessage;
 
 require_once __DIR__ . '/reserve_view.phtml';

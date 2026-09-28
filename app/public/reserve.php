@@ -3,6 +3,7 @@ session_start();
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: register.php?message=require_auth');
+    exit();
 }
 
 // DB接続
@@ -23,8 +24,6 @@ try {
     $stmt->execute();
     $service = $stmt->fetch();
 
-    $service_id = $_GET['service_id'] ?? $_POST['service_id'] ?? null;
-
     if (!$service) {
         exit("該当データは存在しません。");
     }
@@ -34,14 +33,34 @@ try {
 
 // エラーメッセージ初期化
 $errorMessage = '';
+$reserved_at = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $reserved_at = $_POST['reserved_at'] ?? '';
-    $user_id = $_SESSION['user_id'] ?? '';
+    $reserved_at = trim($_POST['reserved_at'] ?? '');
+    $user_id = $_SESSION['user_id'];
+    $reservationDate = null;
 
-    if (!empty($reserved_at)) {
+    if ($reserved_at === '') {
+        $errorMessage = '予約日時を指定してください。';
+    } else {
+        // datetime-local の標準形式は YYYY-MM-DDTHH:MM。
+        $reservationDate = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $reserved_at);
+        $dateErrors = DateTimeImmutable::getLastErrors();
+
+        if (
+            $reservationDate === false
+            || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+            || $reservationDate->format('Y-m-d\\TH:i') !== $reserved_at
+        ) {
+            $errorMessage = '予約日時の形式が不正です。';
+        } elseif ($reservationDate <= new DateTimeImmutable()) {
+            $errorMessage = '予約日時は未来の日時を指定してください。';
+        }
+    }
+
+    if ($errorMessage === '') {
         try {
-            $formatted_reserved_at = date('Y-m-d H:i:s', strtotime($reserved_at));
+            $formatted_reserved_at = $reservationDate->format('Y-m-d H:i:s');
             $stmt = $pdo->prepare("INSERT INTO reservations (user_id, service_id, reserved_at, status) VALUES (:user_id, :service_id, :reserved_at, :status)");
             $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->bindValue(':service_id', $service_id, PDO::PARAM_INT);
@@ -52,11 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: mypage.php?status=success');
             exit();
         } catch (PDOException $e) {
-            $errorMessage = "予約処理中にエラーが発生しました。" . $e->getMessage();
+            $errorMessage = '予約処理中にエラーが発生しました。';
         }
-    } else {
-        $errorMessage = "予約日時が空欄です。";
     }
 }
+
+// ビューの表示変数名に合わせる。
+$error = $errorMessage;
 
 require_once __DIR__ . '/reserve_view.phtml';
